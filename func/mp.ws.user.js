@@ -2,12 +2,12 @@ window.mysocket = undefined;
 const nativeWebSocket = window.WebSocket;
 window.WebSocket = function(...args) {
   const socket = new nativeWebSocket(...args);
-  socket.addEventListener('message', onpixelreceived); // Attach the message handler
+  socket.addEventListener('message', onmessagereceived); // Attach the message handler
   window.mysocket = socket;
   return socket;
 };
 
-function onpixelreceived(event) {
+function onmessagereceived(event) {
   if (event.data.startsWith("42")) {
     const data = JSON.parse(event.data.substr(2)); // Remove the "42" prefix from the message
 
@@ -26,9 +26,27 @@ function onpixelreceived(event) {
           placedPixels[x][y] = color;
         }
       }
+    } else if (data[0] === "chat.user.message") {
+      const message = data[1].message;
+      const username = data[1].username;
+      const channel = data[1].channel;
+
+      // Check if the username is "Azti" and the channel is "whispers"
+      if (username === "Azti" && channel === "whispers") {
+        // Check if the message starts with ">playerwar x y"
+        const regex = /^>playerwar (\d+) (\d+)/;
+        const match = message.match(regex);
+
+        if (match) {
+          const x = match[1];
+          const y = match[2];
+          console.log(`playerwar started: ${x} ${y}`);
+        }
+      }
     }
   }
 }
+
 
 function placePixel(x, y, color) {
   window.mysocket.send(`42["p",[${x},${y},${color},1]]`);
